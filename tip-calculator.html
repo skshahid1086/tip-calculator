@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tip Calculator</title>
+  <style>
+    :root {
+      --ink: #1c1915;
+      --muted: #6f675e;
+      --paper: #f6f1e8;
+      --card: #fffdf8;
+      --line: #e4d9c8;
+      --accent: #c45c26;
+      --accent-ink: #fff8f3;
+      --chip: #f3eadc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Georgia, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, #fff7ea 0%, var(--paper) 46%, #efe4d4 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(420px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 28px 24px 22px;
+      box-shadow: 0 18px 50px rgba(70, 42, 16, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-family: Georgia, "Palatino Linotype", serif;
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    .lede {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .field { margin-bottom: 18px; }
+
+    .money, .people, .custom {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 12px;
+      font: inherit;
+      font-size: 1.35rem;
+      padding: 12px 14px;
+    }
+
+    .money:focus, .people:focus, .custom:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    .tips {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .tips button, .custom-toggle {
+      border: 1px solid var(--line);
+      background: var(--chip);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 0;
+      font: inherit;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .tips button[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .custom-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .custom { font-size: 1rem; }
+
+    .custom-toggle {
+      padding: 0 14px;
+    }
+
+    .results {
+      margin-top: 8px;
+      border-top: 1px dashed var(--line);
+      padding-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .row span { color: var(--muted); }
+
+    .row strong {
+      font-variant-numeric: tabular-nums;
+      font-size: 1.15rem;
+    }
+
+    .each {
+      margin-top: 6px;
+      background: #1c1915;
+      color: #f6f1e8;
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+
+    .each span { color: #d9cbb8; }
+
+    .each strong { font-size: 1.6rem; }
+
+    .note {
+      min-height: 1.2em;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Tip</h1>
+    <p class="lede">Split the bill without the mental math.</p>
+
+    <form id="calc">
+      <div class="field">
+        <label for="bill">Bill</label>
+        <input id="bill" class="money" name="bill" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="48.00">
+      </div>
+
+      <div class="field">
+        <label id="tip-label">Tip</label>
+        <div class="tips" role="group" aria-labelledby="tip-label">
+          <button type="button" data-tip="10">10%</button>
+          <button type="button" data-tip="15">15%</button>
+          <button type="button" data-tip="18" aria-pressed="true">18%</button>
+          <button type="button" data-tip="20">20%</button>
+          <button type="button" data-tip="25">25%</button>
+        </div>
+        <div class="custom-row">
+          <input id="custom" class="custom" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="Custom %">
+          <button type="button" class="custom-toggle" id="use-custom">Use</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="people">People</label>
+        <input id="people" class="people" name="people" type="number" inputmode="numeric" min="1" step="1" value="2">
+      </div>
+    </form>
+
+    <section class="results" aria-live="polite">
+      <div class="row"><span>Tip</span><strong id="tip-out">$0.00</strong></div>
+      <div class="row"><span>Total</span><strong id="total-out">$0.00</strong></div>
+      <div class="row each"><span>Each person</span><strong id="each-out">$0.00</strong></div>
+      <p class="note" id="note"></p>
+    </section>
+  </main>
+
+  <script>
+    const billInput = document.querySelector("#bill");
+    const peopleInput = document.querySelector("#people");
+    const customInput = document.querySelector("#custom");
+    const tipButtons = [...document.querySelectorAll(".tips button")];
+    const tipOut = document.querySelector("#tip-out");
+    const totalOut = document.querySelector("#total-out");
+    const eachOut = document.querySelector("#each-out");
+    const note = document.querySelector("#note");
+
+    let tipPercent = 18;
+
+    const money = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    });
+
+    function peopleCount() {
+      const people = Math.floor(Number(peopleInput.value));
+      if (!Number.isFinite(people) || people < 1) return 1;
+      return people;
+    }
+
+    function cents(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number < 0) return null;
+      return Math.round(number * 100);
+    }
+
+    function render() {
+      const billCents = cents(billInput.value);
+      const people = peopleCount();
+
+      if (billCents === null) {
+        tipOut.textContent = "—";
+        totalOut.textContent = "—";
+        eachOut.textContent = "—";
+        note.textContent = "Enter a bill amount of zero or more.";
+        return;
+      }
+
+      const tipCents = Math.round(billCents * tipPercent / 100);
+      const totalCents = billCents + tipCents;
+      const eachCents = Math.round(totalCents / people);
+
+      tipOut.textContent = money.format(tipCents / 100);
+      totalOut.textContent = money.format(totalCents / 100);
+      eachOut.textContent = money.format(eachCents / 100);
+      note.textContent = tipPercent + "% tip, split " + people + " way" + (people === 1 ? "" : "s") + ".";
+    }
+
+    function selectPreset(percent) {
+      tipPercent = percent;
+      customInput.value = "";
+      tipButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(Number(button.dataset.tip) === percent));
+      });
+      render();
+    }
+
+    tipButtons.forEach((button) => {
+      button.addEventListener("click", () => selectPreset(Number(button.dataset.tip)));
+    });
+
+    document.querySelector("#use-custom").addEventListener("click", () => {
+      const custom = Number(customInput.value);
+      if (!Number.isFinite(custom) || custom < 0 || custom > 100) {
+        note.textContent = "Custom tip must be between 0 and 100.";
+        customInput.focus();
+        return;
+      }
+      tipPercent = custom;
+      tipButtons.forEach((button) => button.setAttribute("aria-pressed", "false"));
+      render();
+    });
+
+    customInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        document.querySelector("#use-custom").click();
+      }
+    });
+
+    billInput.addEventListener("input", render);
+    peopleInput.addEventListener("input", render);
+    peopleInput.addEventListener("blur", () => {
+      peopleInput.value = String(peopleCount());
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
